@@ -38,7 +38,12 @@ int main(){
 		return -1;
 	}
 
+	//Game loop:
+	while (!glfwWindowShouldClose(window)) { //If we haven't yet instructed the window to close yet
+		glfwPollEvents(); //Check if any events are triggered, use callback methods
 
-
+		glfwSwapBuffers(window); //Swap the colour buffer, show it as output to the window
+	}
+	glfwTerminate(); //Clean up resources
 	return 0;
 }
