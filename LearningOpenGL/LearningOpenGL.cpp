@@ -10,9 +10,16 @@
 // GLFW
 #include <GLFW\glfw3.h>
 
+//Callback function for keyboard input
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) { //If the key that changed was the escape key, and it was pressed
+		glfwSetWindowShouldClose(window, GL_TRUE); //Tell the window it was pressed in to close
+	}
+}
+
 int main(){
 	//Setup & initializations:
-	int width = 800, height = 600;
+	const GLuint WINDOW_WIDTH = 800, WINDOW_HEIGHT = 600;
 
 	glfwInit(); //Initialize GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //Tell GLFW we're using OpenGL version 3
@@ -22,14 +29,15 @@ int main(){
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); //Don't let the user resize the window
 
 	//GLFW initialization
-	GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", nullptr, nullptr); //Create window object
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr); //Create window object
 	if(window == nullptr){
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
 	glfwMakeContextCurrent(window); //Make the context of the window the context on the current thread
-	glViewport(0, 0, width, height); //Set the viewport for rendering. (Left, bottom, width, height)
+	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT); //Set the viewport for rendering. (Left, bottom, width, height)
+	glfwSetKeyCallback(window, key_callback); //Set the key callback function for the main window
 
 	//GLEW initialization
 	glewExperimental = GL_TRUE; //Allow us to use core profile for OpenGL
@@ -38,12 +46,17 @@ int main(){
 		return -1;
 	}
 
-	//Game loop:
+	//Main loop:
 	while (!glfwWindowShouldClose(window)) { //If we haven't yet instructed the window to close yet
 		glfwPollEvents(); //Check if any events are triggered, use callback methods
 
+		//Render things!
+		glClearColor(1.0f, 0.6f, 0.3f, 1.0f); //Set the colour for clearning the buffer
+		glClear(GL_COLOR_BUFFER_BIT); //Then clear the buffer
+
 		glfwSwapBuffers(window); //Swap the colour buffer, show it as output to the window
 	}
+	
 	glfwTerminate(); //Clean up resources
 	return 0;
 }
