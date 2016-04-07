@@ -12,25 +12,24 @@
 // GLFW
 #include <GLFW\glfw3.h>
 
-//Callback function for keyboard input
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode); //Callback function for keyboard input
 void loadShader(const char* file);
 void loadVertexShader(const char* file);
 void loadFragmentShader(const char* file);
 
 int main(){
 	//Setup & initializations:
-	const GLuint WINDOW_WIDTH = 800, WINDOW_HEIGHT = 600;
+	//*************
+	//GLFW initialization
+	//*************
 
+	const GLuint WINDOW_WIDTH = 800, WINDOW_HEIGHT = 600;
 	glfwInit(); //Initialize GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //Tell GLFW we're using OpenGL version 3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //Tell GLFW we're going to be using the core profile for OpenGL
 	//(This will allow GLFW to throw errors if we accidentally use legacy functions. 
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); //Don't let the user resize the window
-
-	//GLFW initialization
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr); //Create window object
 	if(window == nullptr){
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -41,12 +40,19 @@ int main(){
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT); //Set the viewport for rendering. (Left, bottom, width, height)
 	glfwSetKeyCallback(window, key_callback); //Set the key callback function for the main window
 
+	//*************
 	//GLEW initialization
+	//*************
+
 	glewExperimental = GL_TRUE; //Allow us to use core profile for OpenGL
 	if (glewInit() != GLEW_OK) {
 		std::cout << "Failed to initialize GLEW" << std::endl;
 		return -1;
 	}
+
+	//*************
+	//VERTEX DATA AND VERTEX BUFFER OBJECT
+	//*************
 
 	//Define Normalized Device Coordinates (NDC) for the triangle we want to draw (x, y, z)
 	GLfloat vertices[] = {
@@ -68,6 +74,7 @@ int main(){
 
 	//*************
 	//VERTEX SHADER
+	//*************
 
 	//Our shader program, stored as a const GLchar*, soon to be replaced with loadVertexShader()
 	const GLchar* vertexShaderSource = "#version 330 core\n"
@@ -92,6 +99,7 @@ int main(){
 
 	//*************
 	//FRAGMENT SHADER
+	//*************
 
 	//Our shader program, stored as a const GLchar*, soon to be replaced with loadFragmentShader()
 	const GLchar* fragmentShaderSource = "#version 330 core\n"
@@ -113,7 +121,8 @@ int main(){
 
 	//*************
 	//LINKING SHADERS TO SHADER PROGRAM
-	
+	//*************
+
 	GLuint shaderProgram;
 	shaderProgram = glCreateProgram(); //Get unique ID for our shader program
 	//Attach both vertex and fragment shaders
@@ -133,14 +142,37 @@ int main(){
 	//The vertex shader allows us to specify any data we want to pass into it, but we need to tell it what part of our input data goes to which attribute
 	//IE: "This means we have to specify how OpenGL should interpret the vertex data before rendering."
 	//Remember, our vertices are stored as floats (32-bits or 4 bytes each)
-	//Each attribute is storred in a buffer, and is tightly packed
+	//Each attribute is stored in a buffer, and is tightly packed
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	//The arguments for glVertexAttribPointer are as follows:
 		//1. The layout position of the attribute (layout = 0, 1, etc)
-		//2. 
+		//2. Specify the size of the attribute
+		//3. Specify the type of data
+		//4. Specify if we want the data to be normalized
+		//5. Specify the stride, ie: how many bytes between the next vertex attribute
+		//6. Specify offset for where the attribute begins in the buffer
+	glEnableVertexAttribArray(0); //Enable the attribute at layout location 0
 
+	//*************
+	//VERTEX ARRAY OBJECT
+	//*************
 
-	//Main loop:
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO); //Generate VAO just like we do for a VBO
+	glBindVertexArray(VAO); //Bind VAO
+	
+	//Copy vertices array into a buffer for OGL to use
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,GL_STATIC_DRAW);
+	//Then, set set our vertex attribute pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	//Unbind the VAO
+	glBindVertexArray(0);
+
+	//*************
+	//MAIN LOOP
+	//*************
 	while (!glfwWindowShouldClose(window)) { //If we haven't yet instructed the window to close yet
 		glfwPollEvents(); //Check if any events are triggered, use callback methods
 
@@ -148,7 +180,10 @@ int main(){
 		glClearColor(1.0f, 0.6f, 0.3f, 1.0f); //Set the colour for clearning the buffer
 		glClear(GL_COLOR_BUFFER_BIT); //Then clear the buffer
 
-
+		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
 
 		glfwSwapBuffers(window); //Swap the colour buffer, show it as output to the window
 	}
@@ -157,7 +192,7 @@ int main(){
 	return 0;
 }
 
-void loadShader(const char* file) {
+void loadShader(const char* file) { //NOT DONE
 	std::ifstream shader;
 	shader.open(file);
 	std::string s;
@@ -166,7 +201,6 @@ void loadShader(const char* file) {
 	shader.close();
 }
 
-//Callback function for keyboard input
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) { //If the key that changed was the escape key, and it was pressed
 		glfwSetWindowShouldClose(window, GL_TRUE); //Tell the window it was pressed in to close
