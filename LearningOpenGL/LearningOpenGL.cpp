@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 // GLEW
@@ -13,9 +14,9 @@
 #include <GLFW\glfw3.h>
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode); //Callback function for keyboard input
-void loadShader(const char* file);
-void loadVertexShader(const char* file);
-void loadFragmentShader(const char* file);
+std::string loadFile(const char* file); //Returns string containing contents of given file
+GLuint compileShader(GLenum shaderType, std::string shaderCode); //Compiles vertex or fragment shader, given its type and source code
+GLuint createShaderProgram(GLuint vertexShader, GLuint fragmentShader); //Links, compiles, then deletes vertex and fragment shaders. Returns the created program
 
 int main(){
 	//Setup & initializations:
@@ -50,85 +51,9 @@ int main(){
 		return -1;
 	}
 
-	//*************
-	//VERTEX SHADER
-	//*************
-
-	//Our shader program, stored as a const GLchar*, soon to be replaced with loadVertexShader()
-	const GLchar* vertexShaderSource = "#version 330 core\n"
-		"layout (location = 0) in vec3 position;\n"
-		"void main()\n"
-		"{\n"
-		"gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-		"}\0";
-
-	GLuint vertexShader; //Shader ID
-	vertexShader = glCreateShader(GL_VERTEX_SHADER); //Create a unique shader ID
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); //Attach the shader source code to the shader
-	glCompileShader(vertexShader); //And compile it!
-								   //Now, check for proper compilation
-	GLint successfulCompilation;
-	GLchar infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &successfulCompilation);
-	if (!successfulCompilation) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "Vertex shader compilation failed.\n" << infoLog << std::endl;
-	}
-
-	//*************
-	//FRAGMENT SHADER
-	//*************
-
-	//Our shader program, stored as a const GLchar*, soon to be replaced with loadFragmentShader()
-	const GLchar* fragmentShaderSource = "#version 330 core\n"
-		"out vec4 color;\n"
-		"void main()\n"
-		"{\n"
-		"color = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
-		"}\n\0";
-	//Now allocate, link, and compile fragment shader as before:
-	GLuint fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &successfulCompilation);
-	if (!successfulCompilation) {
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "Fragment shader compilation failed.\n" << infoLog << std::endl;
-	}
-
-	//*************
-	//LINKING SHADERS TO SHADER PROGRAM
-	//*************
-
-	GLuint shaderProgram;
-	shaderProgram = glCreateProgram(); //Get unique ID for our shader program
-									   //Attach both vertex and fragment shaders
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram); //Link 'em!
-								  //Check for errors:
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &successfulCompilation);
-	if (!successfulCompilation) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "Shader linking failed.\n" << infoLog << std::endl;
-	}
-	//We don't need those seperate shaders, so delete them.
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	//The vertex shader allows us to specify any data we want to pass into it, but we need to tell it what part of our input data goes to which attribute
-	//IE: "This means we have to specify how OpenGL should interpret the vertex data before rendering."
-	//Remember, our vertices are stored as floats (32-bits or 4 bytes each)
-	//Each attribute is stored in a buffer, and is tightly packed
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	//The arguments for glVertexAttribPointer are as follows:
-		//1. The layout position of the attribute (layout = 0, 1, etc)
-		//2. Specify the size of the attribute
-		//3. Specify the type of data
-		//4. Specify if we want the data to be normalized
-		//5. Specify the stride, ie: how many bytes between the next vertex attribute
-		//6. Specify offset for where the attribute begins in the buffer
+	GLuint vertexShader = compileShader(GL_VERTEX_SHADER, loadFile("Shaders/BasicVertexShader.vert"));
+	GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, loadFile("Shaders/BasicFragmentShader.frag"));
+	GLuint shaderProgram = createShaderProgram(vertexShader, fragmentShader);
 
 	//*************
 	//VERTEX DATA,
@@ -189,13 +114,72 @@ int main(){
 	return 0;
 }
 
-void loadShader(const char* file) { //NOT DONE
-	std::ifstream shader;
-	shader.open(file);
-	std::string s;
-	std::getline(shader, s);
-	std::cout << s << std::endl;
-	shader.close();
+std::string loadFile(const char* file) {
+	std::ifstream ifs;
+	ifs.open(file); //Attempt to open the file
+
+	if (ifs.good()) { //If it opened successfully
+		std::ostringstream oss; //Create a string stream for outputing into
+		std::string temp; //Create a temp string for storing each line
+		while (ifs.good()) { //While we can read from the file, ie: not EOF
+			getline(ifs, temp); //Get the next line
+			oss << temp << '\n'; //Concatinate a new line to the end
+		}
+		ifs.close(); //Now close the file
+		return oss.str(); //And return the corresponding string
+	}
+	//Otherwise, output and error and return an empty string
+	std::cerr << "File: " << file << " invalid or not found." << std::endl;
+	return "";
+}
+
+
+GLuint compileShader(GLenum shaderType, std::string shaderCode) {
+	if (shaderType == GL_VERTEX_SHADER || shaderType == GL_FRAGMENT_SHADER) {
+		const GLchar* shaderSource = shaderCode.c_str();
+		GLuint shaderID;
+		shaderID = glCreateShader(shaderType);
+		glShaderSource(shaderID, 1, &shaderSource, NULL); //Attach shader source code to the shader
+		glCompileShader(shaderID); //Compile that code
+
+		//Check for sucessful compilation
+		GLint successfulCompilation;
+		GLchar infoLog[512];
+		glGetShaderiv(shaderID, GL_COMPILE_STATUS, &successfulCompilation);
+		if (!successfulCompilation) { //If we didn't sucessfully compile, spit out some error code
+			glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
+			std::cerr << "Vertex shader compilation failed.\n" << infoLog << std::endl;
+			return NULL;
+		} else { //Otherwise,
+			return shaderID; //Return the ID for the sucessfully compiled shader
+		}
+	} else {
+		std::cerr << "Given shader type not compilable yet." << std::endl;
+	}
+}
+
+GLuint createShaderProgram(GLuint vertexShader, GLuint fragmentShader) {
+	GLuint shaderProgramID;
+	shaderProgramID = glCreateProgram(); //Get unique ID for our shader program
+									   //Attach both vertex and fragment shaders
+	glAttachShader(shaderProgramID, vertexShader);
+	glAttachShader(shaderProgramID, fragmentShader);
+	glLinkProgram(shaderProgramID); //Link 'em!
+								  //Check for errors:
+	GLint successfulCompilation;
+	GLchar infoLog[512];
+	glGetProgramiv(shaderProgramID, GL_LINK_STATUS, &successfulCompilation);
+	if (!successfulCompilation) { //If we didn't sucessfully compile, spit out some error code 
+		glGetProgramInfoLog(shaderProgramID, 512, NULL, infoLog);
+		std::cerr << "Shader linking failed.\n" << infoLog << std::endl;
+		return NULL;
+	} else { //Otherwise,
+		//We don't need those seperate shaders, so delete them.
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+
+		return shaderProgramID; //Return the compiled shader
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
