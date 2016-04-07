@@ -51,28 +51,6 @@ int main(){
 	}
 
 	//*************
-	//VERTEX DATA AND VERTEX BUFFER OBJECT
-	//*************
-
-	//Define Normalized Device Coordinates (NDC) for the triangle we want to draw (x, y, z)
-	GLfloat vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f,  0.5f, 0.0f
-	};
-	GLuint VBO; //Create a vertex buffer object
-	glGenBuffers(1, &VBO); //Generate its unique ID
-	glBindBuffer(GL_ARRAY_BUFFER, VBO); //Bind it to the GL_ARRAY_BUFFER target
-										//Now, any calls we make to the GL_ARRAY_BUFFER target will be used to modify the current bound buffer, which is VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //Copy vertex/NDC data into data buffer's memory
-		//The last agrument for glBufferData defines how we want the GPU to handle/manage the given data.
-		//There are 3 forms:
-		// 1. GL_STATIC_DRAW: The data will not change, or will do so very rarely
-		// 2. GL_DYNAMIC_DRAW: The data will change alot
-		// 3. GL_STREAM_DRAW: The data will change every time it is dra wn
-		//Changing this allows the GPU to know where to allocate this vertex data into it's memory, so more dynamicly changing data gets access to faster memory
-
-	//*************
 	//VERTEX SHADER
 	//*************
 
@@ -88,7 +66,7 @@ int main(){
 	vertexShader = glCreateShader(GL_VERTEX_SHADER); //Create a unique shader ID
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); //Attach the shader source code to the shader
 	glCompileShader(vertexShader); //And compile it!
-	//Now, check for proper compilation
+								   //Now, check for proper compilation
 	GLint successfulCompilation;
 	GLchar infoLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &successfulCompilation);
@@ -125,11 +103,11 @@ int main(){
 
 	GLuint shaderProgram;
 	shaderProgram = glCreateProgram(); //Get unique ID for our shader program
-	//Attach both vertex and fragment shaders
+									   //Attach both vertex and fragment shaders
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram); //Link 'em!
-	//Check for errors:
+								  //Check for errors:
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &successfulCompilation);
 	if (!successfulCompilation) {
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
@@ -143,7 +121,7 @@ int main(){
 	//IE: "This means we have to specify how OpenGL should interpret the vertex data before rendering."
 	//Remember, our vertices are stored as floats (32-bits or 4 bytes each)
 	//Each attribute is stored in a buffer, and is tightly packed
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	//The arguments for glVertexAttribPointer are as follows:
 		//1. The layout position of the attribute (layout = 0, 1, etc)
 		//2. Specify the size of the attribute
@@ -151,25 +129,44 @@ int main(){
 		//4. Specify if we want the data to be normalized
 		//5. Specify the stride, ie: how many bytes between the next vertex attribute
 		//6. Specify offset for where the attribute begins in the buffer
-	glEnableVertexAttribArray(0); //Enable the attribute at layout location 0
 
 	//*************
-	//VERTEX ARRAY OBJECT
+	//VERTEX DATA,
+	//VERTEX BUFFER OBJECT, (VBO)
+	//VERTEX ATTRIBUTE OBJECT, (VAO)
+	//ELEMENT BUFFER OBJECT (EBO)
 	//*************
+	GLfloat vertices[] = { //Rectangle vertices
+		 0.5f,  0.5f, 0.0f,  // Top Right
+		 0.5f, -0.5f, 0.0f,  // Bottom Right
+		-0.5f, -0.5f, 0.0f,  // Bottom Left
+		-0.5f,  0.5f, 0.0f   // Top Left 
+	};
+	GLuint indices[] = {  // Draw order for indexed drawing
+		0, 1, 3,   // First Triangle
+		1, 2, 3    // Second Triangle
+	};
 
-	GLuint VAO;
-	glGenVertexArrays(1, &VAO); //Generate VAO just like we do for a VBO
-	glBindVertexArray(VAO); //Bind VAO
+	GLuint VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO); //Generate the objects, get their IDs
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 	
-	//Copy vertices array into a buffer for OGL to use
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,GL_STATIC_DRAW);
-	//Then, set set our vertex attribute pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	//Unbind the VAO
+	//Bind the vertex array object, then bind and set the vertex buffer and attribute pointers
+	glBindVertexArray(VAO);
+		//Bind VBO
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		//Bind EBO
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		//Bind attribute pointer
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+	//Unbind VAO
 	glBindVertexArray(0);
-
+	
 	//*************
 	//MAIN LOOP
 	//*************
@@ -182,7 +179,7 @@ int main(){
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window); //Swap the colour buffer, show it as output to the window
