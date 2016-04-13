@@ -12,7 +12,7 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 // GLFW
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode); //Callback function for keyboard input
 std::string loadFile(const char* file); //Returns string containing contents of given file

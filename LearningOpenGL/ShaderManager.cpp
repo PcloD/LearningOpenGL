@@ -1,9 +1,8 @@
 #pragma once
 
-
-#include "shaderManager.h"
-
+#include "ShaderManager.h"
 #include "stdafx.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -11,7 +10,7 @@
 
 #define GLEW_STATIC
 #include <GL/glew.h>
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 namespace ShaderManager {
 	std::string loadFile(const char* file) {

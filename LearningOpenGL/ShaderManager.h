@@ -1,13 +1,10 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 namespace ShaderManager {
 	std::string loadFile(const char* file); //Returns string containing contents of given file
