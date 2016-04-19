@@ -152,7 +152,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -167,7 +166,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BasicFragmentShader.frag" />
+    <None Include="Shaders\BasicFragmentShader_Passing_Example.frag" />
     <None Include="Shaders\BasicVertexShader.vert" />
+    <None Include="Shaders\BasicVertexShader_Passing_Example.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

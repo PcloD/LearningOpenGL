@@ -1,7 +1,6 @@
 // LearningOpenGL.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include "ShaderManager.h"
 #include <iostream>
 #include <fstream>
@@ -53,8 +52,8 @@ int main(){
 	}
 
 	//Shaders:
-	GLuint vertexShader = ShaderManager::compileShader(GL_VERTEX_SHADER, ShaderManager::loadFile("Shaders/BasicVertexShader.vert"));
-	GLuint fragmentShader = ShaderManager::compileShader(GL_FRAGMENT_SHADER, ShaderManager::loadFile("Shaders/BasicFragmentShader.frag"));
+	GLuint vertexShader = ShaderManager::compileShader(GL_VERTEX_SHADER, ShaderManager::loadFile("Shaders/BasicVertexShader_Passing_Example.vert"));
+	GLuint fragmentShader = ShaderManager::compileShader(GL_FRAGMENT_SHADER, ShaderManager::loadFile("Shaders/BasicFragmentShader_Uniform_Example.frag"));
 	GLuint shaderProgram = ShaderManager::createShaderProgram(vertexShader, fragmentShader);
 
 	//*************
@@ -105,6 +104,13 @@ int main(){
 		glClear(GL_COLOR_BUFFER_BIT); //Then clear the buffer
 
 		glUseProgram(shaderProgram);
+
+		//Update uniform's color (see uniform fragment shader)
+		GLfloat timeValue = glfwGetTime();
+		GLfloat colorValue = (sin(timeValue) / 2) + 0.5;
+		GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor"); //Get the location of the uniform from given shader program and given name
+		glUniform4f(vertexColorLocation, colorValue, 0.0f, colorValue, 0.0f); //Then set the values of that uniform accordingly
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);

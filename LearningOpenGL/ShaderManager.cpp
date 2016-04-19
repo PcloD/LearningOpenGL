@@ -47,7 +47,7 @@ namespace ShaderManager {
 			glGetShaderiv(shaderID, GL_COMPILE_STATUS, &successfulCompilation);
 			if (!successfulCompilation) { //If we didn't sucessfully compile, spit out some error code
 				glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-				std::cerr << "Vertex shader compilation failed.\n" << infoLog << std::endl;
+				std::cerr << "Shader compilation failed.\n" << infoLog << std::endl;
 				return NULL;
 			}
 			else { //Otherwise,
