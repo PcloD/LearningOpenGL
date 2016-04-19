@@ -14,9 +14,6 @@
 #include <GLFW/glfw3.h>
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode); //Callback function for keyboard input
-std::string loadFile(const char* file); //Returns string containing contents of given file
-GLuint compileShader(GLenum shaderType, std::string shaderCode); //Compiles vertex or fragment shader, given its type and source code
-GLuint createShaderProgram(GLuint vertexShader, GLuint fragmentShader); //Links, compiles, then deletes vertex and fragment shaders. Returns the created program
 
 int main(){
 	//Setup & initializations:
@@ -53,42 +50,38 @@ int main(){
 
 	//Shaders:
 	GLuint vertexShader = ShaderManager::compileShader(GL_VERTEX_SHADER, ShaderManager::loadFile("Shaders/BasicVertexShader_Passing_Example.vert"));
-	GLuint fragmentShader = ShaderManager::compileShader(GL_FRAGMENT_SHADER, ShaderManager::loadFile("Shaders/BasicFragmentShader_Uniform_Example.frag"));
+	GLuint fragmentShader = ShaderManager::compileShader(GL_FRAGMENT_SHADER, ShaderManager::loadFile("Shaders/BasicFragmentShader_Passing_Example.frag"));
 	GLuint shaderProgram = ShaderManager::createShaderProgram(vertexShader, fragmentShader);
 
 	//*************
 	//VERTEX DATA,
 	//VERTEX BUFFER OBJECT, (VBO)
 	//VERTEX ATTRIBUTE OBJECT, (VAO)
-	//ELEMENT BUFFER OBJECT (EBO)
 	//*************
-	GLfloat vertices[] = { //Rectangle vertices
-		 0.5f,  0.5f, 0.0f,  // Top Right
-		 0.5f, -0.5f, 0.0f,  // Bottom Right
-		-0.5f, -0.5f, 0.0f,  // Bottom Left
-		-0.5f,  0.5f, 0.0f   // Top Left 
-	};
-	GLuint indices[] = {  // Draw order for indexed drawing
-		0, 1, 3,   // First Triangle
-		1, 2, 3    // Second Triangle
+	GLfloat vertices[] = {
+		 // Positions         // Colors
+		 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // Bottom Right
+		-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // Bottom Left
+		 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // Top 
 	};
 
-	GLuint VBO, VAO, EBO;
+	GLuint VBO, VAO;
 	glGenVertexArrays(1, &VAO); //Generate the objects, get their IDs
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
 	
 	//Bind the vertex array object, then bind and set the vertex buffer and attribute pointers
 	glBindVertexArray(VAO);
 		//Bind VBO
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		//Bind EBO
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-		//Bind attribute pointer
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		//Bind attribute pointers
+			//Position attribute
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+			//Color attribute
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 	//Unbind VAO
 	glBindVertexArray(0);
@@ -104,15 +97,8 @@ int main(){
 		glClear(GL_COLOR_BUFFER_BIT); //Then clear the buffer
 
 		glUseProgram(shaderProgram);
-
-		//Update uniform's color (see uniform fragment shader)
-		GLfloat timeValue = glfwGetTime();
-		GLfloat colorValue = (sin(timeValue) / 2) + 0.5;
-		GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor"); //Get the location of the uniform from given shader program and given name
-		glUniform4f(vertexColorLocation, colorValue, 0.0f, colorValue, 0.0f); //Then set the values of that uniform accordingly
-
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window); //Swap the colour buffer, show it as output to the window

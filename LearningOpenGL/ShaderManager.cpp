@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ShaderManager.h"
-#include "stdafx.h"
 
 #include <iostream>
 #include <fstream>
@@ -47,7 +46,13 @@ namespace ShaderManager {
 			glGetShaderiv(shaderID, GL_COMPILE_STATUS, &successfulCompilation);
 			if (!successfulCompilation) { //If we didn't sucessfully compile, spit out some error code
 				glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-				std::cerr << "Shader compilation failed.\n" << infoLog << std::endl;
+				if (shaderType == GL_VERTEX_SHADER) {
+					std::cerr << "Vertex shader compilation failed.\n" << infoLog << std::endl;
+				} else {
+					std::cerr << "Fragment shader compilation failed.\n" << infoLog << std::endl;
+				}
+				
+				
 				return NULL;
 			}
 			else { //Otherwise,
