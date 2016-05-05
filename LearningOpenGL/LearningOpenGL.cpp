@@ -1,17 +1,17 @@
 // LearningOpenGL.cpp : Defines the entry point for the console application.
 //
 
-#include "ShaderManager.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
 // GLEW
 #define GLEW_STATIC
 #include <GL/glew.h>
 // GLFW
 #include <GLFW/glfw3.h>
+
+#include "Shader.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode); //Callback function for keyboard input
 
@@ -47,11 +47,8 @@ int main(){
 		std::cout << "Failed to initialize GLEW" << std::endl;
 		return -1;
 	}
-
-	//Shaders:
-	GLuint vertexShader = ShaderManager::compileShader(GL_VERTEX_SHADER, ShaderManager::loadFile("Shaders/BasicVertexShader_Passing_Example.vert"));
-	GLuint fragmentShader = ShaderManager::compileShader(GL_FRAGMENT_SHADER, ShaderManager::loadFile("Shaders/BasicFragmentShader_Passing_Example.frag"));
-	GLuint shaderProgram = ShaderManager::createShaderProgram(vertexShader, fragmentShader);
+	
+	Shader mainShader("Shaders/BasicVertexShader_Passing_Example.vert", "Shaders/BasicFragmentShader_Passing_Example.frag");
 
 	//*************
 	//VERTEX DATA,
@@ -96,7 +93,8 @@ int main(){
 		glClearColor(1.0f, 0.6f, 0.3f, 1.0f); //Set the colour for clearning the buffer
 		glClear(GL_COLOR_BUFFER_BIT); //Then clear the buffer
 
-		glUseProgram(shaderProgram);
+		//glUseProgram(shaderProgram);
+		mainShader.use();
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
