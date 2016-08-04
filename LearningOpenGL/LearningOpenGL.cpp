@@ -7,6 +7,9 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+//SOIL (Simple OpenGL Image Library)
+#include <SOIL.h>
+
 #include "Shader.h"
 #include <iostream>
 #include <fstream>
@@ -49,6 +52,14 @@ int main(){
 	}
 	
 	Shader mainShader("Shaders/BasicVertexShader_Passing_Example.vert", "Shaders/BasicFragmentShader_Passing_Example.frag");
+
+	//*************
+	//Image & Texture work
+	//*************
+
+	int width, height;
+	unsigned char* image = SOIL_load_image("noise_cloud.png", &width, &height, 0, SOIL_LOAD_RGB);
+
 
 	//*************
 	//VERTEX DATA,
