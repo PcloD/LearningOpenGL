@@ -167,6 +167,9 @@
   <ItemGroup>
     <None Include="Shaders\BasicFragmentShader.frag" />
     <None Include="Shaders\BasicFragmentShader_Passing_Example.frag" />
+    <None Include="Shaders\BasicFragmentShader_Uniform_Example.frag" />
+    <None Include="Shaders\BasicTexturedFragmentShader.frag" />
+    <None Include="Shaders\BasicTexturedVertexShader.vert" />
     <None Include="Shaders\BasicVertexShader.vert" />
     <None Include="Shaders\BasicVertexShader_Passing_Example.vert" />
   </ItemGroup>
